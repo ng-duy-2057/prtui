@@ -1,5 +1,24 @@
 #!/bin/bash
 DIR="$(dirname "$(readlink -f "$0")")"
+
+# Fetch latest changes from remote
+git -C "$DIR" fetch
+# Check if there are new commits
+LOCAL_COMMIT=$(git -C "$DIR" rev-parse HEAD)
+REMOTE_COMMIT=$(git -C "$DIR" rev-parse @{u} 2>/dev/null)
+if [ "$LOCAL_COMMIT" != "$REMOTE_COMMIT" ]; then
+	read -p "New changes found. Update to latest version? [y/N]: " yn
+	case $yn in
+		[Yy]*)
+			git -C "$DIR" pull
+            echo "Updated from $LOCAL_COMMIT to $REMOTE_COMMIT."
+			;;
+		*)
+			git -C "$DIR" reset --hard "$LOCAL_COMMIT"
+			;;
+	esac
+fi
+
 source "$DIR/.venv/bin/activate"
 cd "$DIR/py"
 python prtui.py "$@"
